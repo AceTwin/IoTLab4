@@ -80,16 +80,16 @@ void loop()
   //code for the magnet sensor
   if (digitalRead(switchreed)==HIGH){ //if magnets are touching
     Serial.println("Your Door is Closed"); //print to console
-    client.publish("magnet", "closed");
-    client.subscribe("magnet");
+    client.publish("magnet/1", "closed");
+    client.subscribe("magnet/1");
   }
   else //if magnets are not touching
   {
     Serial.println("Your Door is Open");//print to console
-    client.publish("magnet", "open");
-    client.subscribe("magnet");
+    client.publish("magnet/1", "open");
+    client.subscribe("magnet/1");
   }
-  delay(1); //Let's put a delay
+  delay(1000); //Let's put a delay
 
  //code for MQTT 
  client.loop(); //Keep going through code.
