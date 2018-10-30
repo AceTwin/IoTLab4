@@ -2,12 +2,13 @@ int switchreed = D5; //pin for input of sensor
 
 void setup() {
   // put your setup code here, to run once:
-  pinMode(switchreed, INPUT);
+  pinMode(switchreed, INPUT_PULLUP); //give me fixed levels
   Serial.begin(115200);
 }
 
 void loop() { //test whether door is open or closed
   // put your main code here, to run repeatedly:
+  Serial.println(digitalRead(switchreed)); //testing - is there a reading coming up?
   if (digitalRead(switchreed)==HIGH){ //if magnets are touching
     Serial.println("Your Door is Closed"); //print to console
   }
