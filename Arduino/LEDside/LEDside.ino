@@ -15,7 +15,7 @@ const char* password = "xxx"; //Enter Wifi password inbetween quotes
 //MQTT
 const char* mqtt_server = "x.x.x.x"; //Raspberry Pi's (MQTT Broker) IP
 const int mqttPort = 1883; //default port
-char* message;
+char* magnet_status; //Variable to hold whether door is closed or open?
 WiFiClient espClient;
 PubSubClient client(espClient);
 //Initialize light connections
@@ -31,7 +31,7 @@ void callback(char* topic, byte* payload, unsigned int length) { //Watch MQTT me
   Serial.print("Message:"); //prints the message from the channel
   for (int i = 0; i < length; i++) {
     Serial.print((char)payload[i]);
-    message = ((char*)payload[i]);
+    magnet_status = ((char*)payload[i]);
   }
  
   Serial.println();
@@ -95,15 +95,14 @@ void setup() {
 
 // the loop function runs over and over again forever
 void loop() {
-/*
 
-  if (message == "closed")
+  if (magnet_status == "closed")
   {
     state=0;
     Serial.print("closed");
-    dostuff(0);
+    dostuff(0); //Make sure the stoplight is off
   }
-  if (message == "open")
+  if (magnet_status == "open")
   {
     Serial.print("open");
     //look for distance
@@ -112,7 +111,7 @@ void loop() {
   if (!client.connected()) {
    // client.reconnect();
    Serial.println("Disconnected...");
-  }*/
+  }
   client.loop();
 }
 
