@@ -10,17 +10,29 @@
 #include <PubSubClient.h> //allows connection to MQTT broker
 
 //WiFi
-const char* ssid = "ssid";       // WiFi name
-const char* password = "password"; // WiFi password
+const char* ssid = "...";       // WiFi name
+const char* password = "..."; // WiFi password
 
 //MQTT
 const char* mqtt_server = "x.x.x.x"; //Raspberry Pi's (MQTT Broker) IP
 const int mqttPort = 1883; //default port
-char* magnet_status; //Variable to hold whether door is closed or open?
+
+//Not sure if useful or not
+const char* Status = "0"; // This is the state we are going to set for the client to read via HTML
+
 WiFiClient espClient;
 PubSubClient client(espClient);
 
-int Status = 0; // This is the LED status we are going to send to the "distance" channel
+//variables for Sonic  
+  
+  // defines pins numbers
+  const int trigPin = D5;
+  const int echoPin = D2;
+  // defines variables
+  long duration;
+  int distance;
+
+//int Status = 0; // This is the LED status we are going to send to the "distance" channel
 
 void callback(char* topic, byte* payload, unsigned int length) { //Watch MQTT messages
  
@@ -37,15 +49,6 @@ void callback(char* topic, byte* payload, unsigned int length) { //Watch MQTT me
  
 }
 
-//variables for Sonic  
-  
-  // defines pins numbers
-  const int trigPin = D5;
-  const int echoPin = D2;
-  // defines variables
-  long duration;
-  int distance;
-
 
 void setup() 
 {    
@@ -54,7 +57,6 @@ void setup()
     pinMode(echoPin, INPUT); // Sets the echoPin as an Input
 
     //Make a connection to WiFi
-    delay(1000);
     Serial.begin(115200);    // to use tools->serial monitor
     WiFi.begin(ssid, password); //connect to WiFi
 
@@ -93,7 +95,7 @@ void setup()
      }
 
    //Subscribe to the distance channel 
-   client.subscribe("magnet"); //listen for messages in the magnet channel
+//   client.subscribe("magnet"); //listen for messages in the magnet channel
 }  
 
 void loop() 
@@ -118,23 +120,39 @@ void loop()
     char b[5];
     String str=String(distance);
     str.toCharArray(b,5);
+
+// Commented out part used for debugging
+//    delay(1000);
+//    Serial.print(b);
+//    Serial.println("----------------------------------------------");
     
-    if (distance >= 100)
+    if (distance >= 100 && distance <= 150)
     {
-      Status = 3;
+      Status = "3";
+      client.publish("status", Status);
       client.publish("distance", b);
+      client.subscribe("distance");
     }
-    else if (distance >=50)
+    else if (distance >=50 && distance < 100)
     {
-      Status = 2;
+      Status = "2";
+      client.publish("status", Status);
+      client.publish("distance", b);
+      client.subscribe("distance");
     }
-    else if (distance >= 30)
+    else if (distance >= 30 && distance < 50)
     {
-      Status = 1;
+      Status = "1";
+      client.publish("status", Status);
+      client.publish("distance", b);
+      client.subscribe("distance");
     }
     else if (distance < 30)
     {
-      Status = 5;
+      Status = "5";
+      client.publish("status", Status);
+      client.publish("distance", b);
+      client.subscribe("distance");
     }
 
     //code for MQTT
