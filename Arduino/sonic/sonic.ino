@@ -1,25 +1,19 @@
-//Combine test_ap and test_sonic
+//Implementing the sonic with MQTT
 
-/* Server
-*  We write the server first because we need its IP address
-* Ref:https://arduino.stackexchange.com/questions/18176/peer-to-peer-communication
-* https://arduino-esp8266.readthedocs.io/en/latest/esp8266wifi/server-examples.html
-* https://tttapa.github.io/ESP8266/Chap10%20-%20Simple%20Web%20Server.html
+/*References:
+ * Sonic: https://howtomechatronics.com/tutorials/arduino/ultrasonic-sensor-hc-sr04/
+
 */
 
 #include <ESP8266WiFi.h>
 #include <WiFiClient.h> 
-#include <ESP8266WebServer.h> //Set up the access point
+#include <PubSubClient.h> //allows connection to MQTT broker
 
-const char* ssid = "ssid";       // ssid of server (Access Point (AP))
-const char* password = "password";        // password of server (Access Point (AP))
-//WiFiServer server(80);            //Service Port
-ESP8266WebServer server(80);            //Service Port
-void handleState();              // function prototypes for HTTP handlers
-void handleNotFound();
+//WiFi
+const char* ssid = "ssid";       // WiFi name
+const char* password = "password"; // WiFi password
 
-int ledPin = 2; // GPIO2 of Server ESP8266
-int Status = 0; // This is the state we are going to set for the client to read via HTML
+int Status = 0; // This is the LED status we are going to send to the "distance" channel
 
 //variables for Sonic  
   
@@ -37,45 +31,28 @@ void setup()
     pinMode(trigPin, OUTPUT); // Sets the trigPin as an Output
     pinMode(echoPin, INPUT); // Sets the echoPin as an Input
 
-    //Server
+    //Make a connection to WiFi
     delay(1000);
     Serial.begin(115200);    // to use tools->serial monitor
-    WiFi.begin(ssid, password);
+    WiFi.begin(ssid, password); //connect to WiFi
 
       // Wait for connection
-  while (WiFi.status() != WL_CONNECTED) 
-  {
-    delay(500); //5 second wait
-    Serial.print(".");
-  }
+      while (WiFi.status() != WL_CONNECTED) 
+      {
+        delay(500); //5 second wait
+        Serial.print(".");
+      }
 
-    pinMode(ledPin, OUTPUT);   // set GPIO 2 as an output
-
-//    WiFi.mode(WIFI_AP_STA);  // Set WiFi to AP and station mode
-
-    // Connect to the WiFi network
-    Serial.println();
-    Serial.print("Connecting to: "); Serial.println(ssid);
-//    WiFi.softAP(ssid, password);
-
-    // Display the server address
-    Serial.print("Connected, My address: ");
-    Serial.print("http://");
-//    Serial.print(WiFi.softAPIP());
-  Serial.print("IP address: ");
-  Serial.println(WiFi.localIP());
-    Serial.println("/");
-
-    // Tell the server to begin listening for incoming connections
-    server.on("/state", handleState);               // Call the 'handleRoot' function when a client requests URI "/"
-    server.onNotFound(handleNotFound);        // When a client requests an unknown URI (i.e. something other than "/"), call function "handleNotFound"
-    server.begin();
-    Serial.println("Server listening for incoming connections");
+      //Show connection details
+      Serial.println("");
+      Serial.print("Connected to ");
+      Serial.println(ssid);
+      Serial.print("IP address: ");
+      Serial.println(WiFi.localIP());
 }  
 
 void loop() 
 {
-   // Serial.printf("Stations connected to soft-AP = %d\n", WiFi.softAPgetStationNum());
 //** Sonic Code **//
     // Clears the trigPin
     digitalWrite(trigPin, LOW);
@@ -109,16 +86,4 @@ void loop()
       Status = 5;
     }
 
-  server.handleClient();  
-}
-
-void handleState() {
-  
-  server.send(200, "text/plain", String(Status));   // Send HTTP status 200 (Ok) and send some text to the browser/client
-  Serial.println(String(Status) + " sent to client.");
-}
-
-void handleNotFound(){
-  Serial.println("Something went wrong... - 404 delivered");
-  server.send(404, "text/plain", "404: Not found"); // Send HTTP status 404 (Not Found) when there's no handler for the URI in the request
 }
