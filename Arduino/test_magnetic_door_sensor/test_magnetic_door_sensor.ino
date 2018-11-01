@@ -9,7 +9,7 @@ void setup() {
 void loop() { //test whether door is open or closed
   // put your main code here, to run repeatedly:
  
-  if (digitalRead(switchreed)==HIGH){ //if magnets are touching
+  if (digitalRead(switchreed)==LOW){ //if magnets are touching
     Serial.println("Your Door is Closed"); //print to console
   }
   else //if magnets are not touching
