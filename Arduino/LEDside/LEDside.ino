@@ -109,6 +109,7 @@ void setup() {
 
    //Subscribe to the magnet channel 
    client.subscribe("magnet/1"); //listen for messages in the magnet channel
+   client.subscribe("status"); //listen for messages in the status channel
 }
 
 // the loop function runs over and over again forever
