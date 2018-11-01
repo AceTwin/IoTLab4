@@ -15,7 +15,9 @@ const char* password = "xxx"; //Enter Wifi password inbetween quotes
 //MQTT
 const char* mqtt_server = "x.x.x.x"; //Raspberry Pi's (MQTT Broker) IP
 const int mqttPort = 1883; //default port
-char* magnet_status; //Variable to hold whether door is closed or open?
+const char* magnet_status; //Variable to hold whether door is closed or open?
+const char* status; //LED status
+
 WiFiClient espClient;
 PubSubClient client(espClient);
 //Initialize light connections
@@ -24,19 +26,35 @@ int yellow = D3; //Yellow
 int green = D2; //Green
 
 void callback(char* topic, byte* payload, unsigned int length) { //Watch MQTT messages
- 
-  Serial.print("Message arrived in topic: "); //Which channel
-  Serial.println(topic);
- 
-  Serial.print("Message:"); //prints the message from the channel
-  for (int i = 0; i < length; i++) {
-    Serial.print((char)payload[i]);
-    magnet_status = ((char*)payload[i]);
+
+  if (topic == "magnet/1")
+  {
+    Serial.print("Message arrived in topic: "); //Which channel
+    Serial.println(topic);
+    
+    Serial.print("Message:"); //prints the message from the channel
+    for (int i = 0; i < length; i++) {
+      Serial.print((char)payload[i]);
+      magnet_status = ((char*)payload[i]);
+    }
+    Serial.println();
+    Serial.println("-----------------------"); //Seperates the messages
   }
- 
-  Serial.println();
-  Serial.println("-----------------------"); //Seperates the messages
- 
+  
+  if (topic == "status")
+  {
+    Serial.print("Message arrived in topic: "); //Which channel
+    Serial.println(topic);
+    
+    Serial.print("Message:"); //prints the message from the channel
+    for (int i = 0; i < length; i++) {
+      Serial.print((char)payload[i]);
+      status = ((char*)payload[i]);
+    }
+    Serial.println();
+    Serial.println("-----------------------"); //Seperates the messages
+  }
+  
 }
 
 void setup() {
@@ -98,13 +116,14 @@ void loop() {
 
   if (magnet_status == "closed")
   {
-    state=0;
+//    state=0;
     Serial.print("closed");
-    dostuff(0); //Make sure the stoplight is off
+    dostuff("0"); //Make sure the stoplight is off
   }
   if (magnet_status == "open")
   {
     Serial.print("open");
+    dostuff(status);
     //look for distance
    // dostuff(0);
   }
@@ -115,9 +134,9 @@ void loop() {
   client.loop();
 }
 
-void dostuff(int state){
+void dostuff(const char* state){
   //state is red
-  if (state == 1)
+  if (state == "1")
   {
   digitalWrite(red, LOW);    
   digitalWrite(yellow, LOW);
@@ -126,7 +145,7 @@ void dostuff(int state){
   }                       
   
   //state is yellow
-  if (state == 2)
+  if (state == "2")
   {
   digitalWrite(red, LOW);    
   digitalWrite(yellow, LOW);
@@ -135,7 +154,7 @@ void dostuff(int state){
   }
    
   //state is green
-  if (state == 3)
+  if (state == "3")
   {
   digitalWrite(red, LOW);    
   digitalWrite(yellow, LOW);
@@ -144,7 +163,7 @@ void dostuff(int state){
   }
 
   //state is off
-  if (state == 0)
+  if (state == "0")
   {
   //// turn the LEDs off by making the voltage LOW
   digitalWrite(red, LOW);    
@@ -152,7 +171,7 @@ void dostuff(int state){
   digitalWrite(green, LOW);
   }
 
-  if (state ==4) //Traffic Light Cycle
+  if (state == "4") //Traffic Light Cycle
   {
       //Red
       digitalWrite(red, HIGH);     // red on
@@ -169,7 +188,7 @@ void dostuff(int state){
       delay(1000);  
       digitalWrite(green, LOW);
   }
-    if (state ==5) //Traffic Light Cycle
+    if (state =="5") //Traffic Light Backup
   {
       if (statefive==1){
           digitalWrite(red, HIGH);    
