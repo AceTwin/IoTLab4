@@ -78,7 +78,7 @@ void setup() {
 void loop()
 {
   //code for the magnet sensor
-  if (digitalRead(switchreed)==HIGH){ //if magnets are touching
+  if (digitalRead(switchreed)==LOW){ //if magnets are touching
     Serial.println("Your Door is Closed"); //print to console
     client.publish("magnet/1", "closed");
     client.subscribe("magnet/1");
