@@ -71,14 +71,36 @@ void setup() {
   }
  }
  
- client.subscribe("test/magnet");
+ //client.subscribe("test/magnet");
 
 // client.publish("esp/test", "Hello from me"); //publish to the esp/test channel
 // client.subscribe("esp/test"); //listen for messages in the esp/test channel
 }
 
+void reconnect() {
+ // Loop until we're reconnected
+ while (!client.connected()) {
+ Serial.print("Attempting MQTT connection...");
+ // Attempt to connect
+ if (client.connect("ESP8266Magnet")) {
+  Serial.println("connected");
+  // ... and subscribe to topic
+  //client.subscribe("test/magnet");
+ } else {
+  Serial.print("failed, rc=");
+  Serial.print(client.state());
+  Serial.println(" try again in 5 seconds");
+  // Wait 5 seconds before retrying
+  delay(5000);
+  }
+ }
+}
+
 void loop()
 {
+  if (!client.connected()) {
+    reconnect();
+  }
   //code for the magnet sensor
   if (digitalRead(switchreed)==LOW){ //if magnets are touching
     Serial.println("Your Door is Closed"); //print to console
