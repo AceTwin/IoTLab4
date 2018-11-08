@@ -3,9 +3,9 @@
 #include <PubSubClient.h> //allows to connect to MQTT broker
 
 //WiFi
-const char* ssid = "..."; //WiFi Name
-const char* password = "..."; //WiFi Password
-const char* mqtt_server = "x.x.x.x"; //Raspberry Pi's (MQTT Broker) IP
+const char* ssid = "IOTCC"; //WiFi Name
+const char* password = "IOTCC515"; //WiFi Password
+const char* mqtt_server = "192.168.3.1"; //Raspberry Pi's (MQTT Broker) IP
 const int mqttPort = 1883; //default port
 
 //pin for input of sensor
@@ -59,7 +59,7 @@ void setup() {
  while (!client.connected()) {
  Serial.print("Attempting MQTT connection...");
  // Attempt to connect
- if (client.connect("ESP8266 Client")){ //If connected to MQTT Server
+ if (client.connect("ESP8266Magnet")){ //If connected to MQTT Server
   Serial.println("connected");
  } 
  else { //if not connected to MQTT Server
@@ -70,6 +70,8 @@ void setup() {
   delay(5000);
   }
  }
+ 
+ client.subscribe("test/magnet");
 
 // client.publish("esp/test", "Hello from me"); //publish to the esp/test channel
 // client.subscribe("esp/test"); //listen for messages in the esp/test channel
@@ -80,14 +82,12 @@ void loop()
   //code for the magnet sensor
   if (digitalRead(switchreed)==LOW){ //if magnets are touching
     Serial.println("Your Door is Closed"); //print to console
-    client.publish("magnet/1", "closed");
-    client.subscribe("magnet/1");
+    client.publish("test/magnet", "c");
   }
-  else //if magnets are not touching
+  if (digitalRead(switchreed)==HIGH) //if magnets are not touching
   {
     Serial.println("Your Door is Open");//print to console
-    client.publish("magnet/1", "open");
-    client.subscribe("magnet/1");
+    client.publish("test/magnet", "o");
   }
   delay(1000); //Let's put a delay
 

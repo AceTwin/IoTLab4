@@ -10,11 +10,11 @@
 #include <PubSubClient.h> //allows connection to MQTT broker
 
 //WiFi
-const char* ssid = "...";       // WiFi name
-const char* password = "..."; // WiFi password
+const char* ssid = "IOTCC"; //WiFi Name
+const char* password = "IOTCC515"; //WiFi Password
 
 //MQTT
-const char* mqtt_server = "x.x.x.x"; //Raspberry Pi's (MQTT Broker) IP
+const char* mqtt_server = "192.168.3.1"; //Raspberry Pi's (MQTT Broker) IP
 const int mqttPort = 1883; //default port
 
 //Not sure if useful or not
@@ -82,7 +82,7 @@ void setup()
     while (!client.connected()) {
      Serial.print("Attempting MQTT connection...");
      // Attempt to connect
-     if (client.connect("ESP8266Client")){ //If connected to MQTT Server
+     if (client.connect("ESP8266Sonic")){ //If connected to MQTT Server
       Serial.println("connected");
      } 
      else { //if not connected to MQTT Server
@@ -94,7 +94,8 @@ void setup()
       }
      }
 
-   //Subscribe to the distance channel 
+   //Subscribe to the distance channel
+     client.subscribe("test/distance"); 
 //   client.subscribe("magnet"); //listen for messages in the magnet channel
 }  
 
@@ -102,6 +103,7 @@ void loop()
 {
 //** Sonic Code **//
     // Clears the trigPin
+//    Serial.println("I'm trying");
     digitalWrite(trigPin, LOW);
     delayMicroseconds(2);
     // Sets the trigPin on HIGH state for 10 micro seconds
@@ -129,32 +131,28 @@ void loop()
     if (distance >= 100 && distance <= 150)
     {
       Status = "3";
-      client.publish("status", Status);
-      client.publish("distance", b);
-      client.subscribe("distance");
+      client.publish("test/status", Status);
+      client.publish("test/distance", b);
     }
-    else if (distance >=50 && distance < 100)
+    if (distance >=50 && distance < 100)
     {
       Status = "2";
-      client.publish("status", Status);
-      client.publish("distance", b);
-      client.subscribe("distance");
+      client.publish("test/status", Status);
+      client.publish("test/distance", b);
     }
-    else if (distance >= 30 && distance < 50)
+    if (distance >= 30 && distance < 50)
     {
       Status = "1";
-      client.publish("status", Status);
-      client.publish("distance", b);
-      client.subscribe("distance");
+      client.publish("test/status", Status);
+      client.publish("test/distance", b);
     }
-    else if (distance < 30)
+    if (distance < 30)
     {
       Status = "5";
-      client.publish("status", Status);
-      client.publish("distance", b);
-      client.subscribe("distance");
+      client.publish("test/status", Status);
+      client.publish("test/distance", b);
     }
-
+    delay(250);
     //code for MQTT
     client.loop(); 
 
