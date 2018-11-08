@@ -52,108 +52,127 @@ void callback(char* topic, byte* payload, unsigned int length) { //Watch MQTT me
 
 void setup() 
 {    
-    //Sonic
-    pinMode(trigPin, OUTPUT); // Sets the trigPin as an Output
-    pinMode(echoPin, INPUT); // Sets the echoPin as an Input
+  //Sonic
+  pinMode(trigPin, OUTPUT); // Sets the trigPin as an Output
+  pinMode(echoPin, INPUT); // Sets the echoPin as an Input
 
-    //Make a connection to WiFi
-    Serial.begin(115200);    // to use tools->serial monitor
-    WiFi.begin(ssid, password); //connect to WiFi
+  //Make a connection to WiFi
+  Serial.begin(115200);    // to use tools->serial monitor
+  WiFi.begin(ssid, password); //connect to WiFi
 
-      // Wait for connection
-      while (WiFi.status() != WL_CONNECTED) 
-      {
-        delay(500); //5 second wait
-        Serial.print(".");
-      }
+  // Wait for connection
+  while (WiFi.status() != WL_CONNECTED) 
+  {
+    delay(500); //0.5 second wait
+    Serial.print(".");
+  }
 
-      //Show connection details
-      Serial.println("");
-      Serial.print("Connected to ");
-      Serial.println(ssid);
-      Serial.print("IP address: ");
-      Serial.println(WiFi.localIP());
+  //Show connection details
+  Serial.println("");
+  Serial.print("Connected to ");
+  Serial.println(ssid);
+  Serial.print("IP address: ");
+  Serial.println(WiFi.localIP());
 
-    //MQTT Connection/Action
-    client.setServer(mqtt_server, mqttPort);
-    client.setCallback(callback);
+  //MQTT Connection/Action
+  client.setServer(mqtt_server, mqttPort);
+  client.setCallback(callback);
 
-    //MQTT Connection or Fail to Connect
-    while (!client.connected()) {
-     Serial.print("Attempting MQTT connection...");
-     // Attempt to connect
-     if (client.connect("ESP8266Sonic")){ //If connected to MQTT Server
-      Serial.println("connected");
-     } 
-     else { //if not connected to MQTT Server
-      Serial.print("failed, rc=");
-      Serial.print(client.state());
-      Serial.println(" try again in 5 seconds");
-      // Wait 5 seconds before retrying
-      delay(5000);
-      }
-     }
-
-   //Subscribe to the distance channel
-     client.subscribe("test/distance"); 
-//   client.subscribe("magnet"); //listen for messages in the magnet channel
+  //MQTT Connection or Fail to Connect
+  while (!client.connected()) {
+   Serial.print("Attempting MQTT connection...");
+   // Attempt to connect
+   if (client.connect("ESPSonic")){ //If connected to MQTT Server
+    client.subscribe("test/status");
+    Serial.println("connected");
+   } 
+   else { //if not connected to MQTT Server
+    Serial.print("failed, rc=");
+    Serial.print(client.state());
+    Serial.println(" try again in 5 seconds");
+    // Wait 5 seconds before retrying
+    delay(5000);
+    }
+  }
 }  
-
+void reconnect() {
+ // Loop until we're reconnected
+ while (!client.connected()) {
+ Serial.print("Attempting MQTT connection...");
+ // Attempt to connect
+ if (client.connect("ESPSonic")) {
+  Serial.println("connected");
+  client.subscribe("test/status");
+ } else {
+ Serial.print("failed, rc=");
+ Serial.print(client.state());
+ Serial.println(" try again in 2 seconds");
+ // Wait 5 seconds before retrying
+ delay(2000);
+  }
+ }
+}
 void loop() 
 {
-//** Sonic Code **//
-    // Clears the trigPin
-//    Serial.println("I'm trying");
-    digitalWrite(trigPin, LOW);
-    delayMicroseconds(2);
-    // Sets the trigPin on HIGH state for 10 micro seconds
-    digitalWrite(trigPin, HIGH);
-    delayMicroseconds(10);
-    digitalWrite(trigPin, LOW);
-    // Reads the echoPin, returns the sound wave travel time in microseconds
-    duration = pulseIn(echoPin, HIGH);
-    // Calculating the distance
-    distance= duration*0.034/2;
-    // Prints the distance on the Serial Monitor
-    //Serial.print("Distance: ");
-    //Serial.println(distance);
+  // Check if dropped and reconnect
+  if (!client.connected()) {
+    reconnect();
+  }
 
-    //converting int (the distance) to char -- Ref: https://www.instructables.com/id/Converting-integer-to-character/
-    char b[5];
-    String str=String(distance);
-    str.toCharArray(b,5);
+  // Send sonic pulse and read result.
+  digitalWrite(trigPin, LOW);
+  delayMicroseconds(2);
+  // Sets the trigPin on HIGH state for 10 micro seconds
+  digitalWrite(trigPin, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(trigPin, LOW);
+  // Reads the echoPin, returns the sound wave travel time in microseconds
+  duration = pulseIn(echoPin, HIGH);
+  // Calculating the distance
+  distance= duration*0.034/2;
+  
+  //Debug: Prints the distance on the Serial Monitor
+  Serial.print("Distance: ");
+  Serial.println(distance);
 
-// Commented out part used for debugging
-//    delay(1000);
-//    Serial.print(b);
-//    Serial.println("----------------------------------------------");
+  //converting int (the distance) to char -- Ref: https://www.instructables.com/id/Converting-integer-to-character/
+  //char b[5];
+  //String str=String(distance);
+  //str.toCharArray(b,5);
+  char *CurrentStatus = "0";
+  if (distance >= 100)// && distance <= 150)
+  {
+    CurrentStatus = "3";
+
+    //client.publish("test/distance", b);
+  }
+  if (distance >=50 && distance < 100)
+  {
+    CurrentStatus = "2";
+
+    //client.publish("test/distance", b);
+  }
+  if (distance >= 30 && distance < 50)
+  {
+    CurrentStatus = "1";
+
+    //client.publish("test/distance", b);
+  }
+  if (distance < 30)
+  {
+    CurrentStatus = "5";
     
-    if (distance >= 100 && distance <= 150)
-    {
-      Status = "3";
-      client.publish("test/status", Status);
-      client.publish("test/distance", b);
-    }
-    if (distance >=50 && distance < 100)
-    {
-      Status = "2";
-      client.publish("test/status", Status);
-      client.publish("test/distance", b);
-    }
-    if (distance >= 30 && distance < 50)
-    {
-      Status = "1";
-      client.publish("test/status", Status);
-      client.publish("test/distance", b);
-    }
-    if (distance < 30)
-    {
-      Status = "5";
-      client.publish("test/status", Status);
-      client.publish("test/distance", b);
-    }
-    delay(250);
-    //code for MQTT
-    client.loop(); 
+    //client.publish("test/distance", b);
+  }
+  // If Status has changed, publish it.
+  if (CurrentStatus != Status){
+    client.publish("test/status", CurrentStatus);
+    Status = CurrentStatus;
+    Serial.println("Pushed update");
+  }
+  //code for MQTT
 
+  client.loop();
+  delay(100);
+  
 }

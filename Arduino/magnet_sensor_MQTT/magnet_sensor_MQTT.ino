@@ -42,7 +42,7 @@ void setup() {
   // Wait for connection
   while (WiFi.status() != WL_CONNECTED) 
   {
-    delay(500); //5 second wait
+    delay(500); //0.5 second wait
     Serial.print(".");
   }
 
