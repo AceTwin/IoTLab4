@@ -172,7 +172,7 @@ void setup() {
   while (!client.connected()) {
    Serial.print("Attempting MQTT connection...");
    // Attempt to connect
-   if (client.connect("ESP8266Client")){ //If connected to MQTT Server
+   if (client.connect("ESP8266LED")){ //If connected to MQTT Server
     Serial.println("connected");
    } 
    else { //if not connected to MQTT Server
@@ -198,6 +198,7 @@ void reconnect() {
   Serial.println("connected");
   // ... and subscribe to topic
   client.subscribe("test/magnet");
+  client.subscribe("test/status");
  } else {
   Serial.print("failed, rc=");
   Serial.print(client.state());
@@ -216,8 +217,8 @@ void loop() {
   }
 
   // Read global magnet_status
-  Serial.println(magnet_status);
-  if (magnet_status == "closed"){
+  //Serial.println(magnet_status);
+  if (magnet_status == "c"){
     //Serial.println("IT'S CLOSED");
     dostuff("0");
   }
@@ -225,7 +226,7 @@ void loop() {
    // Serial.println("closed");
   //  dostuff("0"); //Make sure the stoplight is off
   
-  if (magnet_status == "open")
+  if (magnet_status == "o")
   {
     Serial.print("open");
     dostuff(status);
