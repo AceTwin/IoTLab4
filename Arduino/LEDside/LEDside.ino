@@ -2,32 +2,57 @@
 
 #include <ESP8266WiFi.h>
 #include <WiFiClient.h>
-//#include <ESP8266HTTPClient.h>
 #include <PubSubClient.h> //allows to connect to MQTT broker
 
-bool statefive = 0;
-int state;
+// Set global vars.
 
-//Setup WiFi stuff
-const char* ssid = "IOTCC"; //WiFi Name
-const char* password = "IOTCC515"; //WiFi Password
+bool statefive = 0;                       // Use this to 'flash' lights if state is 5 (too close).  It flips each time the function is called to turn lights off or on.
+const char* ssid = "IOTCC";               // WiFi Name
+const char* password = "IOTCC515";        // WiFi Password
+const char* mqtt_server = "192.168.3.1";  // Raspberry Pi's (MQTT Broker) IP
+const int mqttPort = 1883;                // default port
+char magnet_status;                       // Variable to hold whether door is closed or open?
+int state;                                // Store state (from ESPSensor)
 
-//MQTT
-const char* mqtt_server = "192.168.3.1"; //Raspberry Pi's (MQTT Broker) IP
-const int mqttPort = 1883; //default port
-char magnet_status[9]; //Variable to hold whether door is closed or open?
-const char* status; //LED status
-
+// WiFi and MQQT Declarations
 WiFiClient espClient;
 PubSubClient client(espClient);
-//Initialize light connections
-int red = D5; //Red
-int yellow = D3; //Yellow
-int green = D2; //Green
 
-void dostuff(const char* state){
-  //state is red
-  if (state == "1")
+// Initialize light connections
+int red = D5;     //Red
+int yellow = D3;  //Yellow
+int green = D2;   //Green
+
+
+void callback(char* topic, byte* payload, unsigned int length) { // Called for MQQT messages on subscribed topics
+  if (strcmp(topic,"test/magnet")==0)           // had to do strcmp because it's C++ :/
+  {
+    Serial.print("Message arrived in topic: "); // Which channel
+    Serial.println(topic);
+    Serial.print("Message:"); //prints the message from the channel
+    magnet_status = (char) payload[0];  // Converts byte to char
+    Serial.print(String(magnet_status)); // Debug print
+    Serial.println();
+    Serial.println("-----------------------"); //Seperates the messages
+  }
+  
+  if (strcmp(topic,"test/status")==0)
+  {
+    Serial.print("Message arrived in topic: "); //Which channel
+    Serial.println(topic);
+    Serial.print("Message:"); //prints the message from the channel
+    payload[length] = '\0'; // Make payload a string by NULL terminating it.
+    state = atoi((char *)payload); // See https://forum.arduino.cc/index.php?topic=527341.msg3596866#msg3596866
+    Serial.print(String(state));
+    Serial.println();
+    Serial.println("-----------------------"); //Seperates the messages
+  }
+  
+}
+
+void dostuff(int state){
+  // state is red
+  if (state == 1)
   {
   digitalWrite(red, LOW);    
   digitalWrite(yellow, LOW);
@@ -36,7 +61,7 @@ void dostuff(const char* state){
   }                       
   
   //state is yellow
-  if (state == "2")
+  if (state == 2)
   {
   digitalWrite(red, LOW);    
   digitalWrite(yellow, LOW);
@@ -45,7 +70,7 @@ void dostuff(const char* state){
   }
    
   //state is green
-  if (state == "3")
+  if (state == 3)
   {
   digitalWrite(red, LOW);    
   digitalWrite(yellow, LOW);
@@ -54,7 +79,7 @@ void dostuff(const char* state){
   }
 
   //state is off
-  if (state == "0")
+  if (state == 0)
   {
   //// turn the LEDs off by making the voltage LOW
   digitalWrite(red, LOW);    
@@ -62,7 +87,7 @@ void dostuff(const char* state){
   digitalWrite(green, LOW);
   }
 
-  if (state == "4") //Traffic Light Cycle
+  if (state == 4) //Traffic Light Cycle
   {
       //Red
       digitalWrite(red, HIGH);     // red on
@@ -79,7 +104,7 @@ void dostuff(const char* state){
       delay(1000);  
       digitalWrite(green, LOW);
   }
-    if (state =="5") //Traffic Light Backup
+    if (state ==5) //Traffic Light Backup
   {
       if (statefive==1){
           digitalWrite(red, HIGH);    
@@ -98,40 +123,6 @@ void dostuff(const char* state){
       } 
 
   //Serial.print("Works");
-}
-
-
-void callback(char* topic, byte* payload, unsigned int length) { //Watch MQTT messages
-
-  //if (topic == "test/magnet")
-  //{
-    Serial.print("Message arrived in topic: "); //Which channel
-    Serial.println(topic);
-    
-    Serial.print("Message:"); //prints the message from the channel
-    for (int i = 0; i < length; i++) {
-      Serial.print((char)payload[i]);
-      magnet_status[i]= (char)payload[i];
-    }
-    //magnet_status = ((char*)payload[i]);
-    Serial.println();
-    Serial.println("-----------------------"); //Seperates the messages
-  //}
-  
-  if (topic == "test/status")
-  {
-    Serial.print("Message arrived in topic: "); //Which channel
-    Serial.println(topic);
-    
-    Serial.print("Message:"); //prints the message from the channel
-    for (int i = 0; i < length; i++) {
-      Serial.print((char)payload[i]);
-      status = ((char*)payload[i]);
-    }
-    Serial.println();
-    Serial.println("-----------------------"); //Seperates the messages
-  }
-  
 }
 
 void setup() {
@@ -217,23 +208,16 @@ void loop() {
   }
 
   // Read global magnet_status
-  //Serial.println(magnet_status);
-  if (magnet_status == "c"){
-    //Serial.println("IT'S CLOSED");
-    dostuff("0");
-  }
-//    state=0;
-   // Serial.println("closed");
-  //  dostuff("0"); //Make sure the stoplight is off
-  
-  if (magnet_status == "o")
+  if (magnet_status=='c')
   {
-    Serial.print("open");
-    dostuff(status);
-    //look for distance
-   // dostuff(0);
+    Serial.println("IT'S CLOSED");
+    dostuff(0);       // Turn LED's off
+  } 
+  if (magnet_status=='o')
+  {
+    Serial.println("IT'S OPEN");
+    dostuff(state);   // Send latest state to LED's
   }
-
   client.loop();
 }
 
